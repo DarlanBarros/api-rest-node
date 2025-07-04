@@ -5,6 +5,34 @@ import { z } from 'zod'
 import { knexdb } from '../database'
 
 export async function transactionsRoutes(app: FastifyInstance) {
+  app.get('/', async () => {
+    const transactions = await knexdb('transactions').select()
+
+    return {
+      transactions,
+    }
+  })
+
+  app.get('/:id', async (request) => {
+    const getTransactionsParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+
+    const { id } = getTransactionsParamsSchema.parse(request.params)
+
+    const transaction = await knexdb('transactions').where('id', id).first()
+
+    return { transaction }
+  })
+
+  app.get('/summary', async () => {
+    const summary = await knexdb('transactions')
+      .sum('amount', { as: 'amount' })
+      .first()
+
+    return { summary }
+  })
+
   app.post('/', async (request, reply) => {
     const createTransctionBodySchema = z.object({
       title: z.string(),
